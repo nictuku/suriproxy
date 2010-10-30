@@ -1,0 +1,29 @@
+1.0:
+Tue Nov 30 11:27:41 BRST 2004
+- Better error treating
+- Added support for "cloaked" URI queries using MD5.
+  That way a provider can give the domain zones to his/her clients,
+  but they will all be one-way "crypted" in MD5 hash, thus
+  avoiding access to the proper list, which could be a security
+  problem.
+- Much better URI extracting code, using SpamAssassin's perl lib.
+
+0.10:
+Sun Oct 10 17:38:11 BRT 2004
+- Recipient whitelist added.
+- Bugfix of bugfix: server should really close the connection.
+- Fixed a do_log bug that was screwing $msg's with %'s.
+
+0.9:
+Wed Oct  6 13:13:03 BRT 2004
+
+- Added URI domain whitelist capability.
+- Will try do decode MIME quoted-printed (not Base64 yet).
+- Read messages in slurp mode.
+- Better URI matching code using TLD's.
+- Bugfix: Server was closing the connection after a denial.
+
+0.8:
+Thu Sep 30 13:24:38 BRT 2004
+
+- Initial release

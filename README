@@ -1,0 +1,99 @@
+Suriproxy, Copyright 2004 by Yves Junqueira
+nictuku@users.sourceforge.net
+
+#warning#
+Suriproxy was made with my needs in sight, so you will probably be 
+bothered with its lack of features and almost non existent 
+documentation. In case I get some feedback, I could try and improve it.
+########
+
+Suriproxy is a fast pre-queue filter for Postfix that will inspect all
+messages content and REJECT those that contains Spamvertised URLs. 
+It addresses the false positives problem by REJECTing messages instead 
+of discarding, or worse, bouncing them.
+
+See www.surbl.org for SURBL servers to use.
+
+In case of a Suriproxy failure during scan, Postfix will issue smtp error 
+code to the client, asking it to try again later. Also, the postmaster 
+will receive a mail regarding the error.
+As all GPL software, Suriproxy comes with no warranty against damage
+and data loss. I use it in my production servers, so I guess it will
+not harm your system either.
+
+Remote clients will keep trying to deliver the messages, so you
+hopefully will not lose mail if Suriproxy fails.
+As it is in early stages of development and tests, keep an
+eye on the logs.
+
+### known problems ###
+
+If you use amavisd-new as your 'talk server', you may notice these
+errors:
+
+Oct  6 12:56:46 host amavis[23867]: (23867-05) ESMTP TROUBLE, ABORTING: 
+timed out
+Oct  6 12:56:46 host amavis[23867]: (23867-05) ESMTP: NOTICE: ABORTING 
+the session: timed out
+
+They happen after a denial if the client quits the connection. 
+Suriproxy will not issue a QUIT to amavisd-new, instead just close the 
+connection. Ignore it :)
+
+### How to use it ###
+
+First, change master.cf in case you use postfix:
+
+ smtp      inet  n       -       n       -       -       smtpd
+   -o smtpd_proxy_filter=127.0.0.1:10023
+
+If you are using a "content_filter", like amavisd-new, you should 
+replace it.
+
+You might want to increase smtpd_proxy_timeout to a bigger value, in
+main.cf:
+
+smtpd_proxy_timeout = 60m
+
+In my own experience, this timeout also applies to the smtp dialog between
+postfix and the client. So, big attachments that take more than
+$smtpd_proxy_timeout to arrive would trigger errors. It's a bandwidth
+limit issue. It doesn't seem to be Suriproxy's performance fault.
+
+Then, decide which will be your after-pre-queue daemon. I am using
+amavisd-new. You could use a special postfix smtp server instance.
+
+If your after-pre-queue daemon is running at tcp:10024, you will
+start Suriproxy with
+
+# /usr/local/sbin/suriproxy 127.0.0.1:10023 127.0.0.1:10024
+
+It will stay in the foreground by default.
+You should run it in the foreground some time, so you could
+get any warnings and errors in STDERR.
+
+You could use Suriproxy as a post-queue filter, but it still does not
+feature mail quarantine or non-discarding options. So you would 
+definetly LOSE MAIL. If you are aware of the risk, change $mode to a 
+non-"transparent" value, and use content_filter instead of 
+smtpd_proxy_filter in your master.cf.
+
+Accepted recipient whitelist formats:
+
+abuse@
+domain.tld
+.domain.tld (whitelists subdomains too)
+abuse@domain.tld
+abuse@.domain.tld
+
+See Postfix' SMTPD_PROXY_README.
+
+
+TODO:
+ - Textify log messages errors.
+ - Quit the connection cleanly with the talk-server.
+ - Make a decent documentation and website
+
+NOT TO DO:
+ - Improve recipient whitelist so the same message can be delivered
+   to foo but not to bar. 
